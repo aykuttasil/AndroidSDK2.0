@@ -46,260 +46,228 @@ import kr.neolab.sdk.util.NLog;
 public class MainActivity extends Activity
 //		implements DrawablePage.DrawablePageListener, DrawableView.DrawableViewGestureListener
 {
-	public static final String TAG = "pensdk.sample";
+    public static final String TAG = "pensdk.sample";
 
-	public static final int REQ_GPS_EXTERNAL_PERMISSION = 0x1002;
+    public static final int REQ_GPS_EXTERNAL_PERMISSION = 0x1002;
 
-	private static final int REQUEST_CONNECT_DEVICE_SECURE = 4;
+    private static final int REQUEST_CONNECT_DEVICE_SECURE = 4;
 
-	private PenClientCtrl penClientCtrl;
+    private PenClientCtrl penClientCtrl;
 
-	private kr.neolab.samplecode.SampleView mSampleView;
+    private kr.neolab.samplecode.SampleView mSampleView;
 
-	// Notification
-	protected Notification.Builder mBuilder;
-	protected NotificationManager mNotifyManager;
-	protected Notification mNoti;
-	
-	public InputPasswordDialog inputPassDialog;
+    // Notification
+    protected Notification.Builder mBuilder;
+    protected NotificationManager mNotifyManager;
+    protected Notification mNoti;
 
-	private FwUpdateDialog fwUpdateDialog;
+    public InputPasswordDialog inputPassDialog;
 
-	private int currentSectionId = -1;
-	private int currentOwnerId = -1;
-	private int currentBookcodeId = -1;
-	private int currentPagenumber = -1;
+    private FwUpdateDialog fwUpdateDialog;
 
-	@Override
-	protected void onCreate( Bundle savedInstanceState )
-	{
-		super.onCreate( savedInstanceState );
+    private int currentSectionId = -1;
+    private int currentOwnerId = -1;
+    private int currentBookcodeId = -1;
+    private int currentPagenumber = -1;
 
-		setContentView( R.layout.activity_main );
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-		try
-		{
-			ViewConfiguration config = ViewConfiguration.get( this );
-			Field menuKeyField = ViewConfiguration.class.getDeclaredField( "sHasPermanentMenuKey" );
+        setContentView(R.layout.activity_main);
 
-			if ( menuKeyField != null )
-			{
-				menuKeyField.setAccessible( true );
-				menuKeyField.setBoolean( config, false );
-			}
-		}
-		catch ( Exception ex )
-		{
-			// Ignore
-		}
+        try {
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
 
-		mSampleView = new kr.neolab.samplecode.SampleView( this );
-		FrameLayout.LayoutParams para = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
-		( (FrameLayout) findViewById( R.id.sampleview_frame ) ).addView( mSampleView, 0, para );
-		
-		PendingIntent pendingIntent = PendingIntent.getBroadcast( this, 0, new Intent( "firmware_update" ), PendingIntent.FLAG_UPDATE_CURRENT );
-		 
-		mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mBuilder = new Notification.Builder(getApplicationContext());
-		mBuilder.setContentTitle( "Update Pen" );
-		mBuilder.setSmallIcon( R.drawable.ic_launcher_n );
-		mBuilder.setContentIntent( pendingIntent );   
+            if (menuKeyField != null) {
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            }
+        } catch (Exception ex) {
+            // Ignore
+        }
 
-		penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
-		chkPermissions ();
-		Log.d( TAG, "SDK Version " + penClientCtrl.getSDKVerions() );
-		Intent oIntent = new Intent();
-		oIntent.setClass( this, NeoSampleService.class );
-		startService( oIntent );
+        mSampleView = new kr.neolab.samplecode.SampleView(this);
+        FrameLayout.LayoutParams para = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
+        ((FrameLayout) findViewById(R.id.sampleview_frame)).addView(mSampleView, 0, para);
 
-		fwUpdateDialog = new FwUpdateDialog( this,penClientCtrl, mNotifyManager, mBuilder);
-	}
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent("firmware_update"), PendingIntent.FLAG_UPDATE_CURRENT);
+
+        mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mBuilder = new Notification.Builder(getApplicationContext());
+        mBuilder.setContentTitle("Update Pen");
+        mBuilder.setSmallIcon(R.drawable.ic_launcher_n);
+        mBuilder.setContentIntent(pendingIntent);
+
+        penClientCtrl = PenClientCtrl.getInstance(getApplicationContext());
+        chkPermissions();
+        Log.d(TAG, "SDK Version " + penClientCtrl.getSDKVerions());
+        Intent oIntent = new Intent();
+        oIntent.setClass(this, NeoSampleService.class);
+        startService(oIntent);
+
+        fwUpdateDialog = new FwUpdateDialog(this, penClientCtrl, mNotifyManager, mBuilder);
+    }
 
 
-	private void chkPermissions ()
-	{
-		if( Build.VERSION.SDK_INT >= 23)
-		{
-			int gpsPermissionCheck = ContextCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION );
-			final int writeExternalPermissionCheck = ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE );
+    private void chkPermissions() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            int gpsPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+            final int writeExternalPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-			if(gpsPermissionCheck == PackageManager.PERMISSION_DENIED || writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED)
-			{
-				ArrayList<String> permissions = new ArrayList<String>();
-				if(gpsPermissionCheck == PackageManager.PERMISSION_DENIED)
-					permissions.add( Manifest.permission.ACCESS_FINE_LOCATION );
-				if(writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED)
-					permissions.add( Manifest.permission.WRITE_EXTERNAL_STORAGE );
-				requestPermissions( permissions.toArray( new String[permissions.size()] ), REQ_GPS_EXTERNAL_PERMISSION );
-			}
-		}
-	}
+            if (gpsPermissionCheck == PackageManager.PERMISSION_DENIED || writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED) {
+                ArrayList<String> permissions = new ArrayList<String>();
+                if (gpsPermissionCheck == PackageManager.PERMISSION_DENIED)
+                    permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+                if (writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED)
+                    permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                requestPermissions(permissions.toArray(new String[permissions.size()]), REQ_GPS_EXTERNAL_PERMISSION);
+            }
+        }
+    }
 
-	@Override
-	public void onRequestPermissionsResult ( int requestCode, String[] permissions, int[] grantResults )
-	{
-		if (requestCode == REQ_GPS_EXTERNAL_PERMISSION )
-		{
-			boolean bGrantedExternal = false;
-			boolean bGrantedGPS = false;
-			for ( int i = 0; i < permissions.length; i++ )
-			{
-				if ( permissions[i].equals( Manifest.permission.WRITE_EXTERNAL_STORAGE ) && grantResults[i] == PackageManager.PERMISSION_GRANTED )
-				{
-					bGrantedExternal = true;
-				}
-				else if ( permissions[i].equals( Manifest.permission.ACCESS_FINE_LOCATION ) && grantResults[i] == PackageManager.PERMISSION_GRANTED )
-				{
-					bGrantedGPS = true;
-				}
-			}
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQ_GPS_EXTERNAL_PERMISSION) {
+            boolean bGrantedExternal = false;
+            boolean bGrantedGPS = false;
+            for (int i = 0; i < permissions.length; i++) {
+                if (permissions[i].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE) && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    bGrantedExternal = true;
+                } else if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION) && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    bGrantedGPS = true;
+                }
+            }
 
-			if ( ( permissions.length == 1 ) && ( bGrantedExternal || bGrantedGPS ) )
-			{
-				bGrantedExternal = true;
-				bGrantedGPS = true;
-			}
+            if ((permissions.length == 1) && (bGrantedExternal || bGrantedGPS)) {
+                bGrantedExternal = true;
+                bGrantedGPS = true;
+            }
 
-			if ( !bGrantedExternal || !bGrantedGPS )
-			{
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				builder.setTitle( "Permission Check" );
-				builder.setMessage( "PERMISSION_DENIED" );
-				builder.setPositiveButton( "OK", new DialogInterface.OnClickListener()
-				{
-					@Override
-					public void onClick ( DialogInterface dialog, int which )
-					{
-						finish();
-					}
-				} );
-				builder.setCancelable( false );
-				builder.create().show();
-			}
-		}
-	}
+            if (!bGrantedExternal || !bGrantedGPS) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Permission Check");
+                builder.setMessage("PERMISSION_DENIED");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+                builder.setCancelable(false);
+                builder.create().show();
+            }
+        }
+    }
 
-	@Override
-	protected void onPause()
-	{
-		super.onPause();
+    @Override
+    protected void onPause() {
+        super.onPause();
 
-		unregisterReceiver( mBroadcastReceiver );
+        unregisterReceiver(mBroadcastReceiver);
 
-	}
+    }
 
-	@Override
-	protected void onResume()
-	{
-		super.onResume();
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-		IntentFilter filter = new IntentFilter( Broadcast.ACTION_PEN_MESSAGE );
-		filter.addAction( Broadcast.ACTION_PEN_DOT );
-		filter.addAction( Broadcast.ACTION_OFFLINE_STROKES );
-		filter.addAction( Broadcast.ACTION_WRITE_PAGE_CHANGED );
-		filter.addAction( Broadcast.ACTION_SYMBOL_ACTION );
+        IntentFilter filter = new IntentFilter(Broadcast.ACTION_PEN_MESSAGE);
+        filter.addAction(Broadcast.ACTION_PEN_DOT);
+        filter.addAction(Broadcast.ACTION_OFFLINE_STROKES);
+        filter.addAction(Broadcast.ACTION_WRITE_PAGE_CHANGED);
+        filter.addAction(Broadcast.ACTION_SYMBOL_ACTION);
 
 
+        filter.addAction("firmware_update");
+
+        registerReceiver(mBroadcastReceiver, filter);
 
 
-		filter.addAction( "firmware_update" );
-		
-		registerReceiver( mBroadcastReceiver, filter );
-		
+    }
 
-	}
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_CONNECT_DEVICE_SECURE:
+                // When DeviceListActivity returns with a device to connect
+                if (resultCode == Activity.RESULT_OK) {
+                    String address = null;
 
-	@Override
-	protected void onActivityResult( int requestCode, int resultCode, Intent data )
-	{
-		switch ( requestCode )
-		{
-			case REQUEST_CONNECT_DEVICE_SECURE:
-				// When DeviceListActivity returns with a device to connect
-				if ( resultCode == Activity.RESULT_OK )
-				{
-					String address = null;
+                    if ((address = data.getStringExtra(DeviceListActivity.EXTRA_DEVICE_ADDRESS)) != null) {
+                        boolean isLe = data.getBooleanExtra(DeviceListActivity.EXTRA_IS_BLUETOOTH_LE, false);
+                        penClientCtrl.setLeMode(isLe);
+                        penClientCtrl.connect(address);
+                    }
+                }
+                break;
+        }
+    }
 
-					if ( (address = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_ADDRESS )) != null )
-					{
-						boolean isLe = data.getBooleanExtra( DeviceListActivity.EXTRA_IS_BLUETOOTH_LE, false);
-						penClientCtrl.setLeMode(isLe);
-						penClientCtrl.connect( address );
-					}
-				}
-				break;
-		}
-	}
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
 
-	@Override
-	public boolean onCreateOptionsMenu( Menu menu )
-	{
-		// Inflate the menu items for use in the action bar
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate( R.menu.main, menu );
+        return super.onCreateOptionsMenu(menu);
+    }
 
-		return super.onCreateOptionsMenu( menu );
-	}
-
-	@Override
-	protected void onDestroy() {
-		// TODO Auto-generated method stub
-		super.onDestroy();
+    @Override
+    protected void onDestroy() {
+        // TODO Auto-generated method stub
+        super.onDestroy();
 //        unregisterReceiver( mBTDuplicateRemoveBroadcasterReceiver );
-		Intent oIntent = new Intent();
-		oIntent.setClass( this, NeoSampleService.class );
-		stopService( oIntent );
+        Intent oIntent = new Intent();
+        oIntent.setClass(this, NeoSampleService.class);
+        stopService(oIntent);
 
-		PenClientCtrl.getInstance( getApplicationContext() ).disconnect();
-	}
-	@Override
-	public boolean onOptionsItemSelected( MenuItem item )
-	{
-		// Handle presses on the action bar items
-		switch ( item.getItemId() )
-		{
-			case R.id.action_setting:
+        PenClientCtrl.getInstance(getApplicationContext()).disconnect();
+    }
 
-				if ( penClientCtrl.isAuthorized() )
-				{
-					startActivity( new Intent( MainActivity.this, SettingActivity.class ) );
-				}
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle presses on the action bar items
+        switch (item.getItemId()) {
+            case R.id.action_setting:
 
-				return true;
+                if (penClientCtrl.isAuthorized()) {
+                    startActivity(new Intent(MainActivity.this, SettingActivity.class));
+                }
 
-			case R.id.action_connect:
+                return true;
 
-				if ( !penClientCtrl.isConnected() )
-				{
-					startActivityForResult( new Intent( MainActivity.this, DeviceListActivity.class ), 4 );
-				}
+            case R.id.action_connect:
 
-				return true;
+                if (!penClientCtrl.isConnected()) {
+                    startActivityForResult(new Intent(MainActivity.this, DeviceListActivity.class), 4);
+                }
 
-			case R.id.action_disconnect:
+                return true;
 
-				if ( penClientCtrl.isConnected() )
-				{
-					penClientCtrl.disconnect();
-				}
+            case R.id.action_disconnect:
 
-				return true;
+                if (penClientCtrl.isConnected()) {
+                    penClientCtrl.disconnect();
+                }
 
-			case R.id.action_offline_list:
+                return true;
 
-				if ( penClientCtrl.isAuthorized() )
-				{
-					// to process saved offline data
-					penClientCtrl.reqOfflineDataList();
-				}
+            case R.id.action_offline_list:
 
-				return true;
+                if (penClientCtrl.isAuthorized()) {
+                    // to process saved offline data
+                    penClientCtrl.reqOfflineDataList();
+                }
 
-			case R.id.action_upgrade:
+                return true;
 
-				if ( penClientCtrl.isAuthorized() )
-				{
-					fwUpdateDialog.show();;
+            case R.id.action_upgrade:
+
+                if (penClientCtrl.isAuthorized()) {
+                    fwUpdateDialog.show();
+                    ;
 //					if(penClientCtrl.getProtocolVersion() == 1)
 //					{
 //						// location of firmware (you should locate file in this directory.)
@@ -313,235 +281,205 @@ public class MainActivity extends Activity
 //						// To request a firmware upgrade.
 //						penClientCtrl.upgradePen2( new File( pathFirmware ), "0.03.0003" );
 //					}
-				}
+                }
 
-				return true;
+                return true;
 
-			case R.id.action_pen_status:
+            case R.id.action_pen_status:
 
-				if ( penClientCtrl.isAuthorized() )
-				{
-					// request connected to the current state of the pen provided.
-					penClientCtrl.reqPenStatus();
-				}
+                if (penClientCtrl.isAuthorized()) {
+                    // request connected to the current state of the pen provided.
+                    penClientCtrl.reqPenStatus();
+                }
 
-				return true;
+                return true;
 
-			default:
-				return super.onOptionsItemSelected( item );
-		}
-	}
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
-	public String getExternalStoragePath()
-	{
-		if ( Environment.getExternalStorageState().equals( Environment.MEDIA_MOUNTED ) )
-		{
-			return Environment.getExternalStorageDirectory().getAbsolutePath();
-		}
-		else
-		{
-			return Environment.MEDIA_UNMOUNTED;
-		}
-	}
+    public String getExternalStoragePath() {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            return Environment.getExternalStorageDirectory().getAbsolutePath();
+        } else {
+            return Environment.MEDIA_UNMOUNTED;
+        }
+    }
 
-	private void handleDot(Dot dot )
-	{
+    private void handleDot(Dot dot) {
 
-		NLog.d( "handleDot type =" + dot.dotType );
-		mSampleView.addDot( dot );
-	}
+        NLog.d("handleDot type =" + dot.dotType);
+        mSampleView.addDot(dot);
+    }
 
-	private void handleMsg( int penMsgType, String content )
-	{
-		Log.d( TAG, "handleMsg : " + penMsgType );
+    private void handleMsg(int penMsgType, String content) {
+        Log.d(TAG, "handleMsg : " + penMsgType);
 
-		switch ( penMsgType )
-		{
-			// Message of the attempt to connect a pen
-			case PenMsgType.PEN_CONNECTION_TRY:
+        switch (penMsgType) {
+            // Message of the attempt to connect a pen
+            case PenMsgType.PEN_CONNECTION_TRY:
 
-				Util.showToast( this, "try to connect." );
+                Util.showToast(this, "try to connect.");
 
-				break;
+                break;
 
-			// Pens when the connection is completed (state certification process is not yet in progress)
-			case PenMsgType.PEN_CONNECTION_SUCCESS:
+            // Pens when the connection is completed (state certification process is not yet in progress)
+            case PenMsgType.PEN_CONNECTION_SUCCESS:
 
-				Util.showToast( this, "connection is successful." );
-				break;
+                Util.showToast(this, "connection is successful.");
+                break;
 
 
-			case PenMsgType.PEN_AUTHORIZED:
-				// OffLine Data set use
-				penClientCtrl.setAllowOfflineData( true );
+            case PenMsgType.PEN_AUTHORIZED:
+                // OffLine Data set use
+                penClientCtrl.setAllowOfflineData(true);
 
-			break;
-			// Message when a connection attempt is unsuccessful pen
-			case PenMsgType.PEN_CONNECTION_FAILURE:
+                break;
+            // Message when a connection attempt is unsuccessful pen
+            case PenMsgType.PEN_CONNECTION_FAILURE:
 
-				Util.showToast( this, "connection has failed." );
+                Util.showToast(this, "connection has failed.");
 
-				break;
-
-			
-			case PenMsgType.PEN_CONNECTION_FAILURE_BTDUPLICATE:
-				String connected_Appname = "";
-				try
-				{
-					JSONObject job = new JSONObject( content );
-
-					connected_Appname = job.getString("packageName");
-				}
-				catch ( JSONException e )
-				{
-					e.printStackTrace();
-				}
-
-				Util.showToast( this, String.format("The pen is currently connected to %s app. If you want to proceed, please disconnect the pen from %s app.",connected_Appname,connected_Appname));
-				break;
-				
-			// When you are connected and disconnected from the state pen
-			case PenMsgType.PEN_DISCONNECTED:
-
-				Util.showToast( this, "connection has been terminated." );
-			// Pen transmits the state when the firmware update is processed.
-			case PenMsgType.PEN_FW_UPGRADE_STATUS:
-			case PenMsgType.PEN_FW_UPGRADE_SUCCESS:
-			case PenMsgType.PEN_FW_UPGRADE_FAILURE:
-			case PenMsgType.PEN_FW_UPGRADE_SUSPEND:
-			{
-				if(fwUpdateDialog != null)
-					fwUpdateDialog.setMsg(penMsgType, content);
-			}
-				break;
+                break;
 
 
-			// Offline Data List response of the pen
-			case PenMsgType.OFFLINE_DATA_NOTE_LIST:
+            case PenMsgType.PEN_CONNECTION_FAILURE_BTDUPLICATE:
+                String connected_Appname = "";
+                try {
+                    JSONObject job = new JSONObject(content);
 
-				try
-				{
-					JSONArray list = new JSONArray( content );
+                    connected_Appname = job.getString("packageName");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
-					for ( int i = 0; i < list.length(); i++ )
-					{
-						JSONObject jobj = list.getJSONObject( i );
+                Util.showToast(this, String.format("The pen is currently connected to %s app. If you want to proceed, please disconnect the pen from %s app.", connected_Appname, connected_Appname));
+                break;
 
-						int sectionId = jobj.getInt( JsonTag.INT_SECTION_ID );
-						int ownerId = jobj.getInt( JsonTag.INT_OWNER_ID );
-						int noteId = jobj.getInt( JsonTag.INT_NOTE_ID );
-						NLog.d( TAG, "offline(" + ( i + 1 ) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId );
-					}
-				}
-				catch ( JSONException e )
-				{
-					e.printStackTrace();
-				}
+            // When you are connected and disconnected from the state pen
+            case PenMsgType.PEN_DISCONNECTED:
 
-				// if you want to get offline data of pen, use this function.
-				// you can call this function, after complete download.
-				//
+                Util.showToast(this, "connection has been terminated.");
+                // Pen transmits the state when the firmware update is processed.
+            case PenMsgType.PEN_FW_UPGRADE_STATUS:
+            case PenMsgType.PEN_FW_UPGRADE_SUCCESS:
+            case PenMsgType.PEN_FW_UPGRADE_FAILURE:
+            case PenMsgType.PEN_FW_UPGRADE_SUSPEND: {
+                if (fwUpdateDialog != null)
+                    fwUpdateDialog.setMsg(penMsgType, content);
+            }
+            break;
 
 
-				break;
+            // Offline Data List response of the pen
+            case PenMsgType.OFFLINE_DATA_NOTE_LIST:
 
-			// Messages for offline data transfer begins
-			case PenMsgType.OFFLINE_DATA_SEND_START:
+                try {
+                    JSONArray list = new JSONArray(content);
 
-				break;
+                    for (int i = 0; i < list.length(); i++) {
+                        JSONObject jobj = list.getJSONObject(i);
 
-			// Offline data transfer completion
-			case PenMsgType.OFFLINE_DATA_SEND_SUCCESS:
+                        int sectionId = jobj.getInt(JsonTag.INT_SECTION_ID);
+                        int ownerId = jobj.getInt(JsonTag.INT_OWNER_ID);
+                        int noteId = jobj.getInt(JsonTag.INT_NOTE_ID);
+                        NLog.d(TAG, "offline(" + (i + 1) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
-				if(penClientCtrl.getProtocolVersion() ==1)
-				parseOfflineData();
+                // if you want to get offline data of pen, use this function.
+                // you can call this function, after complete download.
+                //
 
-				break;
 
-			// Offline data transfer failure
-			case PenMsgType.OFFLINE_DATA_SEND_FAILURE:
+                break;
 
-				break;
+            // Messages for offline data transfer begins
+            case PenMsgType.OFFLINE_DATA_SEND_START:
 
-			// Progress of the data transfer process offline
-			case PenMsgType.OFFLINE_DATA_SEND_STATUS:
-			{
-				try
-				{
-					JSONObject job = new JSONObject( content );
+                break;
 
-					int total = job.getInt( JsonTag.INT_TOTAL_SIZE );
-					int received = job.getInt( JsonTag.INT_RECEIVED_SIZE );
+            // Offline data transfer completion
+            case PenMsgType.OFFLINE_DATA_SEND_SUCCESS:
 
-					Log.d( TAG, "offline data send status => total : " + total + ", progress : " + received );
-				}
-				catch ( JSONException e )
-				{
-					e.printStackTrace();
-				}
-			}
-				break;
+                if (penClientCtrl.getProtocolVersion() == 1)
+                    parseOfflineData();
 
-			// When the file transfer process of the download offline
-			case PenMsgType.OFFLINE_DATA_FILE_CREATED:
-			{
-				try
-				{
-					JSONObject job = new JSONObject( content );
+                break;
 
-					int sectionId = job.getInt( JsonTag.INT_SECTION_ID );
-					int ownerId = job.getInt( JsonTag.INT_OWNER_ID );
-					int noteId = job.getInt( JsonTag.INT_NOTE_ID );
-					int pageId = job.getInt( JsonTag.INT_PAGE_ID );
+            // Offline data transfer failure
+            case PenMsgType.OFFLINE_DATA_SEND_FAILURE:
 
-					String filePath = job.getString( JsonTag.STRING_FILE_PATH );
+                break;
 
-					Log.d( TAG, "offline data file created => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId + ", pageId : " + pageId + " filePath : " + filePath );
-				}
-				catch ( JSONException e )
-				{
-					e.printStackTrace();
-				}
-			}
-				break;
+            // Progress of the data transfer process offline
+            case PenMsgType.OFFLINE_DATA_SEND_STATUS: {
+                try {
+                    JSONObject job = new JSONObject(content);
 
-			// Ask for your password in a message comes when the pen
-			case PenMsgType.PASSWORD_REQUEST:
-			{
-				int retryCount = -1, resetCount = -1;
+                    int total = job.getInt(JsonTag.INT_TOTAL_SIZE);
+                    int received = job.getInt(JsonTag.INT_RECEIVED_SIZE);
 
-				try
-				{
-					JSONObject job = new JSONObject( content );
+                    Log.d(TAG, "offline data send status => total : " + total + ", progress : " + received);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            break;
 
-					retryCount = job.getInt( JsonTag.INT_PASSWORD_RETRY_COUNT );
-					resetCount = job.getInt( JsonTag.INT_PASSWORD_RESET_COUNT );
-				}
-				catch ( JSONException e )
-				{
-					e.printStackTrace();
-				}
+            // When the file transfer process of the download offline
+            case PenMsgType.OFFLINE_DATA_FILE_CREATED: {
+                try {
+                    JSONObject job = new JSONObject(content);
 
-				if(inputPassDialog == null)
-					inputPassDialog = new InputPasswordDialog( this, this );
-				inputPassDialog.show();
-			}
-				break;
-			case PenMsgType.PEN_ILLEGAL_PASSWORD_0000:
-			{
-				if(inputPassDialog == null)
-					inputPassDialog = new InputPasswordDialog( this, this );
-				inputPassDialog.show();
-			}
-			break;
+                    int sectionId = job.getInt(JsonTag.INT_SECTION_ID);
+                    int ownerId = job.getInt(JsonTag.INT_OWNER_ID);
+                    int noteId = job.getInt(JsonTag.INT_NOTE_ID);
+                    int pageId = job.getInt(JsonTag.INT_PAGE_ID);
 
-		}
-	}
+                    String filePath = job.getString(JsonTag.STRING_FILE_PATH);
 
-	public void inputPassword( String password )
-	{
-		penClientCtrl.inputPassword( password );
-	}
+                    Log.d(TAG, "offline data file created => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId + ", pageId : " + pageId + " filePath : " + filePath);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            break;
+
+            // Ask for your password in a message comes when the pen
+            case PenMsgType.PASSWORD_REQUEST: {
+                int retryCount = -1, resetCount = -1;
+
+                try {
+                    JSONObject job = new JSONObject(content);
+
+                    retryCount = job.getInt(JsonTag.INT_PASSWORD_RETRY_COUNT);
+                    resetCount = job.getInt(JsonTag.INT_PASSWORD_RESET_COUNT);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                if (inputPassDialog == null)
+                    inputPassDialog = new InputPasswordDialog(this, this);
+                inputPassDialog.show();
+            }
+            break;
+            case PenMsgType.PEN_ILLEGAL_PASSWORD_0000: {
+                if (inputPassDialog == null)
+                    inputPassDialog = new InputPasswordDialog(this, this);
+                inputPassDialog.show();
+            }
+            break;
+
+        }
+    }
+
+    public void inputPassword(String password) {
+        penClientCtrl.inputPassword(password);
+    }
 
 //	private void onUpgrading( int total, int progress )
 //	{
@@ -568,111 +506,90 @@ public class MainActivity extends Activity
 //		mNotifyManager.notify( 0, mBuilder.build() );
 //	}
 
-	private void parseOfflineData()
-	{
-		// obtain saved offline data file list
-		String[] files = OfflineFileParser.getOfflineFiles();
+    private void parseOfflineData() {
+        // obtain saved offline data file list
+        String[] files = OfflineFileParser.getOfflineFiles();
 
-		if ( files == null || files.length == 0 )
-		{
-			return;
-		}
+        if (files == null || files.length == 0) {
+            return;
+        }
 
-		for ( String file : files )
-		{
-			try
-			{
-				// create offline file parser instance
-				OfflineFileParser parser = new OfflineFileParser( file );
+        for (String file : files) {
+            try {
+                // create offline file parser instance
+                OfflineFileParser parser = new OfflineFileParser(file);
 
-				// parser return array of strokes
-				Stroke[] strokes = parser.parse();
+                // parser return array of strokes
+                Stroke[] strokes = parser.parse();
 
-				if ( strokes != null )
-				{
+                if (strokes != null) {
 //					ArrayList<Stroke> strokeList = new ArrayList( Arrays.asList( strokes ));
-					mSampleView.addStrokes( strokes );
-				}
+                    mSampleView.addStrokes(strokes);
+                }
 
-				// delete data file
-				parser.delete();
-				parser = null;
-			}
-			catch ( Exception e )
-			{
-				Log.e( TAG, "parse file exeption occured.", e );
-			}
-		}
-	}
+                // delete data file
+                parser.delete();
+                parser = null;
+            } catch (Exception e) {
+                Log.e(TAG, "parse file exeption occured.", e);
+            }
+        }
+    }
 
-	private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver()
-	{
-		@Override
-		public void onReceive( Context context, Intent intent )
-		{
-			String action = intent.getAction();
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
 
-			if ( Broadcast.ACTION_PEN_MESSAGE.equals( action ) )
-			{
-				int penMsgType = intent.getIntExtra( Broadcast.MESSAGE_TYPE, 0 );
-				String content = intent.getStringExtra( Broadcast.CONTENT );
+            if (Broadcast.ACTION_PEN_MESSAGE.equals(action)) {
+                int penMsgType = intent.getIntExtra(Broadcast.MESSAGE_TYPE, 0);
+                String content = intent.getStringExtra(Broadcast.CONTENT);
 
-				handleMsg( penMsgType, content );
-			}
-			else if ( Broadcast.ACTION_PEN_DOT.equals( action ) )
-			{
-				Dot dot = intent.getParcelableExtra(Broadcast.EXTRA_DOT );
-				dot.color = Color.BLACK;
-				handleDot(dot );
-			}
-			else if(Broadcast.ACTION_OFFLINE_STROKES.equals( action ))
-			{
-				Parcelable[] array = intent.getParcelableArrayExtra( Broadcast.EXTRA_OFFLINE_STROKES );
-				if(array != null)
-				{
-					Stroke[] strokes  = new Stroke[array.length];
+                handleMsg(penMsgType, content);
+            } else if (Broadcast.ACTION_PEN_DOT.equals(action)) {
+                Dot dot = intent.getParcelableExtra(Broadcast.EXTRA_DOT);
+                dot.color = Color.BLACK;
+                handleDot(dot);
+            } else if (Broadcast.ACTION_OFFLINE_STROKES.equals(action)) {
+                Parcelable[] array = intent.getParcelableArrayExtra(Broadcast.EXTRA_OFFLINE_STROKES);
+                if (array != null) {
+                    Stroke[] strokes = new Stroke[array.length];
 //					ArrayList<Stroke> offList = new ArrayList<Stroke>();
-					for (int i = 0; i < array.length; i++) {
-						strokes[i] = ((Stroke) array[i]);
-					}
-					mSampleView.addStrokes( strokes);
-				}
-			}
-			else if(Broadcast.ACTION_WRITE_PAGE_CHANGED.equals( action ))
-			{
-				int sectionId = intent.getIntExtra( Broadcast.EXTRA_SECTION_ID, -1);
-				int ownerId = intent.getIntExtra( Broadcast.EXTRA_OWNER_ID, -1);
-				int noteId = intent.getIntExtra( Broadcast.EXTRA_BOOKCODE_ID, -1);
-				int pageNum = intent.getIntExtra( Broadcast.EXTRA_PAGE_NUMBER, -1);
-				currentSectionId = sectionId;
-				currentOwnerId = ownerId;
-				currentBookcodeId = noteId;
-				currentPagenumber =pageNum;
-				mSampleView.changePage(sectionId, ownerId,noteId,pageNum );
-			}
-			else if(Broadcast.ACTION_SYMBOL_ACTION.equals( action ))
-			{
-				int sectionId = intent.getIntExtra( Broadcast.EXTRA_SECTION_ID, -1);
-				int ownerId = intent.getIntExtra( Broadcast.EXTRA_OWNER_ID, -1);
-				int noteId = intent.getIntExtra( Broadcast.EXTRA_BOOKCODE_ID, -1);
-				int pageNum = intent.getIntExtra( Broadcast.EXTRA_PAGE_NUMBER, -1);
-				if(currentSectionId == sectionId && currentOwnerId == ownerId && currentBookcodeId == noteId && currentPagenumber == pageNum)
-				{
-					String symbolId = intent.getStringExtra( Broadcast.EXTRA_SYMBOL_ID);
-					MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
-					Symbol s = metadataCtrl.getInstance().findApplicableSymbol( symbolId );
-					if(s != null)
-					{
-						Toast.makeText(MainActivity.this, "Symbol Check!! Action="+s.getAction()+", Param="+s.getParam(), Toast.LENGTH_LONG).show();
-					}
-				}
-			}
+                    for (int i = 0; i < array.length; i++) {
+                        strokes[i] = ((Stroke) array[i]);
+                    }
+                    mSampleView.addStrokes(strokes);
+                }
+            } else if (Broadcast.ACTION_WRITE_PAGE_CHANGED.equals(action)) {
+                int sectionId = intent.getIntExtra(Broadcast.EXTRA_SECTION_ID, -1);
+                int ownerId = intent.getIntExtra(Broadcast.EXTRA_OWNER_ID, -1);
+                int noteId = intent.getIntExtra(Broadcast.EXTRA_BOOKCODE_ID, -1);
+                int pageNum = intent.getIntExtra(Broadcast.EXTRA_PAGE_NUMBER, -1);
+                currentSectionId = sectionId;
+                currentOwnerId = ownerId;
+                currentBookcodeId = noteId;
+                currentPagenumber = pageNum;
+                mSampleView.changePage(sectionId, ownerId, noteId, pageNum);
+            } else if (Broadcast.ACTION_SYMBOL_ACTION.equals(action)) {
+                int sectionId = intent.getIntExtra(Broadcast.EXTRA_SECTION_ID, -1);
+                int ownerId = intent.getIntExtra(Broadcast.EXTRA_OWNER_ID, -1);
+                int noteId = intent.getIntExtra(Broadcast.EXTRA_BOOKCODE_ID, -1);
+                int pageNum = intent.getIntExtra(Broadcast.EXTRA_PAGE_NUMBER, -1);
+                if (currentSectionId == sectionId && currentOwnerId == ownerId && currentBookcodeId == noteId && currentPagenumber == pageNum) {
+                    String symbolId = intent.getStringExtra(Broadcast.EXTRA_SYMBOL_ID);
+                    MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
+                    Symbol s = metadataCtrl.getInstance().findApplicableSymbol(symbolId);
+                    if (s != null) {
+                        Toast.makeText(MainActivity.this, "Symbol Check!! Action=" + s.getAction() + ", Param=" + s.getParam(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
 //			else if ( Broadcast.ACTION_PEN_DOT.equals( action ))
 //			{
 //				penClientCtrl.suspendPenUpgrade();
 //			}
-		}
-	};
+        }
+    };
 
 //	@Override
 //	public void onFinish ()
